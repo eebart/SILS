@@ -12,12 +12,14 @@ np = np
 These matrices can be used to partition the model into levels and/or cycles.
 The functions binAddI and binPwr are used to construct reach. '''
 def adj(graph): # Construction of the adjacency matrix #
-    adj=nx.adj_matrix(graph, nodelist=None)#, weight=None
-    
+    #adj=nx.adj_matrix(graph, nodelist=None)#, weight=None
+    #TODO verify todense()
+    adj=nx.adjacency_matrix(graph,nodelist=None).todense()
     return adj
 
 def binAddI(adj): # Adds the identity matrix to the adjacency matrix, by means of Boolean addition #
-    a = np.mat(adj); I = np.identity(len(adj),float);
+    a = np.mat(adj)
+    I = np.identity(len(adj),float)
     aI = a + I
     
     for i in range(0,len(adj),1):
@@ -57,9 +59,12 @@ def binPrd(A,B):
     return P
 
 def reach(adj): # Defines the reach matrix derived from an adjacency matrix
-    aI = binAddI(adj); p = aI
-    n = binPwr(aI,2); diff = n - p
-    zeros = diff - diff; cond = np.equal(diff,zeros)
+    aI = binAddI(adj)
+    p = aI
+    n = binPwr(aI,2)
+    diff = n - p
+    zeros = diff - diff
+    cond = np.equal(diff,zeros)
     
     while False in cond:
         p = n;

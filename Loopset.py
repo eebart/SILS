@@ -3,7 +3,7 @@ Created on January 2012 - March 2012
 
 @author: Bas M.J. Keijser
 '''
-import cPickle
+import pickle
 import networkx as nx
 import Partitions as prt
 import numpy as np
@@ -39,7 +39,7 @@ def graphPlot(graph):
     
 def distance(graph): 
     adj = prt.adj(graph);
-    B = prt.binAddI(adj); D = prt.binSub(B, np.identity(len(adj),float))
+    B = prt.binAddI(adj); D = prt.binSub(B, np.identity(len(adj)))
     prevS = B
     
     for i in range(2,len(adj),1):
@@ -241,7 +241,7 @@ if __name__ == "__main__":
         
         sils = SILS(graph)
         for entry in sils:
-            print entry
+            print (entry)
 
 #        indicesEdges,uniqueLoops = LoopKO.uniqueEdges(graph,sils)
 #        indicesConsEdges,uniqueConsLoops = LoopKO.uniqueConsEdges(graph,sils)
@@ -261,4 +261,4 @@ if __name__ == "__main__":
 #        print 'Loops that can be turned off by two unique consecutive edges are the following.'
 #        for elem in uniqCons: print elem
 #        for name in uniqueConsEdges: print name
-    print 'done again'
+    print ('done again')
