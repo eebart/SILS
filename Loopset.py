@@ -8,7 +8,7 @@ import networkx as nx
 import Partitions as prt
 import numpy as np
 np = np
-import LoopKO
+#import LoopKO
 import matplotlib.pyplot as plt
 
 
@@ -234,8 +234,8 @@ if __name__ == "__main__":
 	    # have to specify it.
 	    graph = pickle.load(f)
     
-	graph.remove_nodes_from(["INITIAL TIME","TIME STEP","SAVEPER","Time",
-                             "TIME STEP","FINAL TIME"])
+    graph.remove_nodes_from(["INITIAL TIME","TIME STEP","SAVEPER",
+    	"Time","TIME STEP","FINAL TIME"])
 
 
 	# Updated (should work)
