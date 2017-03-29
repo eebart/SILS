@@ -1,0 +1,1019 @@
+{UTF-8}
+:MACRO: pink noise(mean,std dev,tao,dt)
+pink noise = INTEG((mean + white - pink noise)/tao, mean)
+	~	
+	~	Pink Noise generator. Mean and std dev describe the parameters of the distribution.
+		Tao is the time constant of the autocorrelation coefficient.
+	|
+
+white = std dev * SQRT(24*tao/dt) * (RANDOM 0 1()-0.5)
+	~	
+	~	The sustraction of 0.5 to the random number generator is to 
+		center the distribution around 0 as the DYNAMO generator used by
+		Richardson & Pugh.
+	|
+
+:END OF MACRO:
+********************************************************
+	.Delivery
+********************************************************~
+		The sector models the order-processing system and the construct of work pressure --
+		the normalized gap between required and actual service capacity.
+		The main constructs is the notion of Service Backlog, i.e., outstanding 
+		customer orders.
+	|
+
+Service Backlog = INTEG((customer orders-order fulfillment),DESIRED DELIVERY DELAY*customer orders
+		)
+	~	Order
+	~	Service Backlog. Initialized in equilibrium based on the incoming customer 
+		orders.
+	|
+
+order fulfillment = MIN(potential order fulfillment,Service Backlog/MIN RESIDENCE T FOR AN ORDER
+		)
+	~	Order/Week [0,?]
+	~	The potential order fulfillment rate limited by the orders that can be 
+		processed from the backlog.
+	|
+
+MIN RESIDENCE T FOR AN ORDER = 0.1
+	~	Week
+	~	Represents the physical constraints of the flow of an order through the 
+		service center. Set based on observations.
+	|
+
+potential order fulfillment = service capacity*work intensity/time per order
+	~	Order/Week
+	~	Number of orders that could be processed given the current service capacity and
+		the corrections to work pressure and time per order.
+	|
+
+service capacity = on office service capacity*effective labor fraction*effect of fatigue on prod
+	~	Hours/Week
+	~	The effective service capacity. Calculated by correcting 
+		the on office service capacity by the skill of employees and the 
+		effects of fatigue on productivity.
+	|
+
+on office service capacity = total labor*HWE*(1-absenteeism)
+	~	Hours/Week
+	~	Number of person hours available to work (Total labor * hours per week per employee).
+		The formulation reflects the effects of absenteeism not considered in the 
+		original model but of significant impact in the NH Lending Center.
+	|
+
+desired service capacity = (Service Backlog/DESIRED DELIVERY DELAY)*Desired To
+	~	Hours/Week
+	~	Estimated from the underlying desired time per order.
+	|
+
+DESIRED DELIVERY DELAY =	0.1
+	~	Week
+	~	Desired Delivery Delay. Management's stated goal for delivery delay. Set 
+		based on interviews and stated goals.
+	|
+
+work pressure = (desired service capacity-service capacity)/desired service capacity
+	~	Dimensionless
+	~	The normalized gap between desired service capacity and effective service 
+		capacity.
+	|
+
+********************************************************
+	.Responses
+********************************************************~
+		This sector models the responses to work pressure: employees increase their
+		work intensity and reduce the allocation of time per order; management adjusts
+		service capacity. Consequences of employees responses 
+		(burnout and erosion of service standards) are also captured in this 
+		sector.
+	|
+
+work intensity = EXP(BETA*work pressure)
+	~	Dimensionless
+	~	Work intensity. The employees' response as overtime to work 
+		pressure. This should be formulated as table function.  The present 
+		formulation reflects the equation used for estimation.
+	|
+
+BETA = 0.370546
+	~	Dimensionless
+	~	Slope of the table function that reflects the effect of work 
+		pressure on work intensity. Estimated to fit past data on time per order.
+	|
+
+Fatigue E = INTEG((work intensity-Fatigue E)/T TO ACUMM WI E,INITIAL FE)
+	~	Dimensionless [0,?]
+	~	Fatigue to affect productivity. The accumulation of fatigue 
+		over the t to acumm WI p period.
+	|
+
+INITIAL FE = 1
+	~	Dimensionless [0,?]
+	~	Initial accumulation of fatigue to affect productivity. Initialized at 
+		the normal operating value (1) based on historical data.
+	|
+
+T TO ACUMM WI E = 3
+	~	Week [0,?]
+	~	Time to accumulate work intensity to affect productivity. Time constant
+		for the accumulation of work intensity to become fatigue that affects 
+		productivity. Set based on previous studies.
+	|
+
+effect of fatigue on prod = FP ON PRD GRAPH(Fatigue E)
+	~	Dimensionless [0,1]
+	~	Effect of fatigue on Productivity
+	|
+
+FP ON PRD GRAPH ([(0,0)-(2,1)],(0.8,1),(1,1),(1.1429,1),(1.2857,0.92),(1.428,0.785),
+(1.5714,0.695),(1.7143,0.64),(1.8571,0.6),(2,0.57))
+	~	Dimensionless
+	~	Table function of the Effect of Fatigue on Productivity. Set based on 
+		previous studies.
+	|
+
+Fatigue A = INTEG((work intensity-Fatigue A)/T TO ACUMM WI A,INITIAL FA)
+	~	Dimensionless [0,?]
+	~	Fatigue to affect turnover. The accumulation of fatigue over the t to 
+		acumm WI t period.
+	|
+
+INITIAL FA = 1
+	~	Dimensionless [0,?]
+	~	Initial accumulation of fatigue to affect turnover. Initialized at the 
+		normal operating value (1) based on historical data.
+	|
+
+T TO ACUMM WI A = 52
+	~	Week [0,?]
+	~	Time to accumulate work intensity to affect turnover. Time constant
+		for the accumulation of work intensity to become fatigue that affects 
+		turnover. Set based on previous studies.
+	|
+
+effect of fatigue on turnover = FT ON TO GRAPH(Fatigue A)
+	~	Dimensionless
+	~	Effect of fatigue on Turnover.
+	|
+
+FT ON TO GRAPH ([(0,0)-(2,1)],(0.8,1),(1,1),(2,0.593))
+	~	Dimensionless
+	~	Table function of the Effect of Fatigue on Turnover. Set based on previous 
+		studies.
+	|
+
+time per order = MAX(Desired To*effect of wp on to*effect of qp on to, MIN PROCESSING TPO
+		)
+	~	Hours/Order
+	~	Time to process each order. This time is calculated based on the underlying 
+		time per order (anchor value) and adjusted by the effects of 
+		work pressure and quality on turnover.  The response is limited in the 
+		lower bound to reflect process constraints.
+	|
+
+MIN PROCESSING TPO = 0.1
+	~	Hours/Order
+	~	Minimum processing time per order. Reflects the physical constraints of the 
+		processing of an order in terms of time allocated to process the order.
+	|
+
+effect of wp on to = EXP(ALPHA*work pressure)
+	~	Dimensionless
+	~	Effect of work pressure on time per order.  The employees' response as modification
+		of time per order to work pressure. This should be  formulated as table 
+		function. The present formulation reflects the equation used for 
+		estimation.
+	|
+
+ALPHA = -0.63934
+	~	Dimensionless
+	~	Slope of the table function that reflects the effect of work pressure on 
+		time per order. Estimated to fit past data on time per order.
+	|
+
+effect of qp on to = EXP(GAMMA*quality pressure)
+	~	Dimensionless
+	~	Effect of quality pressure on time per order. 
+		The employees' response as modification of time per order to quality pressure. 
+		This should be formulated as table function. The present 
+		formulation reflects the substution done to estimated parameter.
+	|
+
+GAMMA = 0
+	~	Dimensionless
+	~	Slope of the table function that reflects the effect of quality
+		pressure on time per order. Estimated to fit past data on time per order.
+	|
+
+Desired To = INTEG (dto chg,INITIAL DTO)
+	~	Hours/Order
+	~	Underlying desired time per order. Reflects the anchor value
+		for the time pr order estimation.
+	|
+
+INITIAL DTO = 1.0758
+	~	Hours/Order [0,?]
+	~	Initial Desired Time per Order. Estimated to fit past data on time per 
+		order.
+	|
+
+dto chg = (time per order-Desired To)/t to adjust dto
+	~	(Hours/Order)/Week
+	~	Rate of change of the underlying desired time per order. An exponential 
+		smoothing to past performance.
+	|
+
+t to adjust dto = IF THEN ELSE( time per order>Desired To ,TTUP , TTDN )
+	~	Week
+	~	Time to adjust Desired Time per Order. Time constant for the adjustment of 
+		Desired time per Order to past performance.
+	|
+
+TTDN = 18.7321
+	~	Week
+	~	Time constant for the downward adjustment of Desired TO. Estimated to fit 
+		past data on time per order.
+	|
+
+TTUP = 813564
+	~	Week
+	~	Time constant for the upward adjustment of Desired TO. Estimated to fit 
+		past data on time per order.
+	|
+
+Perceived Labor Productivity = INTEG(((service capacity/(total labor*HWE))
+	-Perceived Labor Productivity)/T TO PERCEIVE LP,INITIAL P ELF)
+	~	Dimensionless
+	~	Perceived Labor Productivity. Labor productivity is estimated by comparing 
+		the service capacity to the nominal service capacity.
+	|
+
+INITIAL P ELF = 0.77907
+	~	Dimensionless
+	~	Initial Perceived labor productivity. Estimated to fit past data on 
+		desired labor.
+	|
+
+T TO PERCEIVE LP = 6.70261
+	~	Week
+	~	Time to perceive labor productivity. Estimated to fit past data on desired 
+		labor.
+	|
+
+Desired Labor = INTEG((desired service capacity/(HWE*Perceived Labor Productivity)-
+	Desired Labor)/T TO ADJUST DL,
+	desired service capacity/(HWE*Perceived Labor Productivity))
+	~	Employee
+	~	Smoothing of the instantaneous labor requirements based on desired service 
+		capacity and perceived labor productivity
+	|
+
+T TO ADJUST DL = 18.762
+	~	Week
+	~	Time to Adjust desired labor. Estimated to fit past data on desired labor.
+	|
+
+********************************************************
+	.Service capacity
+********************************************************~
+		This sector models the acquisition, training and turnover of the labor force.
+		It estimates labor's net productivity considering the level of experience and its
+		training process.  It also model the employees' decision to leave the firm based
+		on their perceptions of quality and burnout.
+	|
+
+total labor = Rookies+Experienced Personnel
+	~	Employee [0,?]
+	~	Total labor force (headcount).
+	|
+
+effective labor fraction = MAX(0,(Experienced Personnel+Rookies 
+	*(ROOKIES' EFFECTIVENESS-FRAC EP FOR TRAINING))/(Experienced Personnel+Rookies))
+	~	Dimensionless [0,1]
+	~	Effectiveness of labor force (based on the skill combination).
+	|
+
+ROOKIES' EFFECTIVENESS = 0.35
+	~	Dimensionless [0,1]
+	~	Effectiveness of Rookies relative to that of Experienced Personnel. 
+		Judgmentally set based on interviews.
+	|
+
+FRAC EP FOR TRAINING = 0.05
+	~	Dimensionless [0,1]
+	~	Fraction of Sr Personnel's time required to train and supervise a Rookie. 
+		Judgmentally set based on interviews.
+	|
+
+Experienced Personnel = INTEG(experience rate-turnover rate,INITIAL EXPERIENCED PERSONNEL
+		)
+	~	Employee
+	~	Employees that have reached full productivity.
+	|
+
+INITIAL EXPERIENCED PERSONNEL = 64.099
+	~	Employee
+	~	Initial number of Experienced personnel. Set based on historical data.
+	|
+
+Rookies = INTEG (hiring rate-experience rate,INITIAL ROOKIES)
+	~	Employee
+	~	Employees that have been recently hired and have not yet achieved full 
+		productivity.
+	|
+
+INITIAL ROOKIES = 14.06
+	~	Employee
+	~	Initial number of rookies. Set based on historical data.
+	|
+
+experience rate = Rookies/T FOR EXPERIENCE
+	~	Employee/Week [0,?]
+	~	Rate at which employees are becoming experienced.
+	|
+
+T FOR EXPERIENCE = 12
+	~	Week [0,?]
+	~	Average amount of time it takes a Rookie to become fully effective.
+	|
+
+turnover rate = Experienced Personnel /(T FOR TURNOVER*effect of fatigue on turnover*
+		effect of qp on turnover)
+	~	Employee/Week
+	~	Rate of people voluntarily leaving the firm.
+	|
+
+T FOR TURNOVER = 400.784
+	~	Week
+	~	Average job tenure
+	|
+
+hiring rate = Vacancies/HIRING DELAY
+	~	Employee/Week [0,?]
+	~		Rate at which employees are joining the service center.
+	|
+
+HIRING DELAY = 29.9836
+	~	Week [0,?]
+	~	Time it takes to fill a vacancy one it has been declared. Estimated to fit 
+		past data on labor hiring.
+	|
+
+Vacancies = INTEG((labor order rate-hiring rate),INITIAL VACANCIES)
+	~	Employee
+	~	Unfilled openings in the service center
+	|
+
+INITIAL VACANCIES = 0.0008
+	~	Employee
+	~	Initialized in equilibrium.
+	|
+
+desired vacancies = desired hiring*HIRING DELAY
+	~	Employee
+	~	By Little's law, desired vacancies are based on the desired hiring rate 
+		and the time it takes to fill a vacancy.
+	|
+
+indicated labor order rate = desired hiring+ vacancies correction
+	~	Employee/Week
+	~	The overall desired correction in the labor stocks and supply line.
+	|
+
+vacancies correction = (desired vacancies-Vacancies)/T TO ADJUST LABOR
+	~	Employee/Week
+	~	The adjustment to close the gap between vacancies and desired vacancies.
+	|
+
+T TO ADJUST LABOR = 11.5442
+	~	Week [0,?]
+	~	Time that management takes between recognizing a need to adjust labor and
+		acting on that information. Estimated to fit past data on labor hiring.
+	|
+
+desired hiring = replacement rate+labor correction
+	~	Employee/Week
+	~	Replacement of turnover (when appropriate) plus correction of discrepancies 
+		between desired and existing labor.
+	|
+
+replacement rate = IF THEN ELSE(Desired Labor>=total labor, turnover rate ,0 )
+	~	Employee/Week
+	~	Replacement of turnover is only active when Desired labor is greater than 
+		existing labor. When the firm is trying to downsize it does not replace 
+		turnover.
+	|
+
+labor correction = (Desired Labor-total labor)/T TO ADJUST LABOR
+	~	Employee/Week
+	~	The adjustment to close the gap between total labor and desired total 
+		labor.
+	|
+
+labor order rate = MAX(-Vacancies/T TO CANCEL VACANCIES,indicated labor order rate)
+	~	Employee/Week
+	~	The indicated labor order rate is constrained by the number of vacancies 
+		that is possible to cancel.
+	|
+
+T TO CANCEL VACANCIES = 1
+	~	Week [0,?]
+	~	Time to cancel vacancies. Used to control for the non-negativity of the 
+		vacancies stock. Judgmentally set based on interviews.
+	|
+
+********************************************************
+	.Quality
+********************************************************~
+		This sector models the perceptions and expectations of quality for the 
+		three main agents involved in the service delivery process -- employees,
+		managers and customers .Perception is modeled as exponential adjusting 
+		processes, while expectations are modeled as levels of aspirations
+		with exogenous anchoring to represent the intrinsic biases of each agent.
+	|
+
+delivered quality = TPO ON DQ GRAPH((time per order-Cust Service Expectations)/Cust Service Expectations
+		)
+	~	Quality
+	~	Quality delivered as perceived by customer. It is a function of the normalized gap
+		between time allocated to customer order and the expectation that customer 
+		had.
+	|
+
+TPO ON DQ GRAPH ([(-0.5,0)-(0.5,2)],(-0.5,0.2),(-0.4,0.45),(-0.3,0.65)
+,(-0.2,0.8),(-0.1,0.95),(0,1),(0.1,1.05),(0.2,1.2),(0.3,1.35)
+,(0.4,1.55),(0.5,1.8))
+	~	Quality
+	~	Effect of Time per order on Delivered Quality. Table function formulated 
+		to reflect a 'tolerance zone' and Kano's classification of attributes.
+	|
+
+Emp Perception Of Quality = INTEG((delivered quality-Emp Perception Of Quality)/
+	T FOR EMP TO PERCEIVE,initial perception of quality)
+	~	Quality
+	~	Employees' perception of Quality delivered. 
+		Initialized in equilibrium from know parameters.
+	|
+
+initial perception of quality = TPO ON DQ GRAPH(
+	(INITIAL DTO-CUST EXPECTATION REFERENCE)/CUST EXPECTATION REFERENCE)
+	~	Quality
+	~	Initial level of quality. Used to initialize quality perceptions in 
+		equilibrium.
+	|
+
+T FOR EMP TO PERCEIVE = 4
+	~	Week
+	~	Time for employees to perceive delivered quality. Judgmentally set based 
+		on interviews.
+	|
+
+Mgmt Perception Of Quality = INTEG ((delivered quality-Mgmt Perception Of Quality)/
+	T FOR MGMT TO PERCEIVE,initial perception of quality)
+	~	Quality
+	~	Management's perception of Quality delivered. Initialized in equilibrium 
+		from know parameters.
+	~	:SUPPLEMENTARY 
+	|
+
+T FOR MGMT TO PERCEIVE = 12
+	~	Week
+	~	Time for management to perceive service quality.
+		Parameter not active in base simulation.
+	|
+
+Cust Perception Of Quality = INTEG ((delivered quality-Cust Perception Of Quality)/
+	T TO PERCEIVE CUST REPORT ON QUALITY, initial perception of quality)
+	~	Quality
+	~	Customers' perception of Quality delivered. Initialized in equilibrium 
+		from know parameters.
+	~	:SUPPLEMENTARY 
+	|
+
+T TO PERCEIVE CUST REPORT ON QUALITY = 52
+	~	Week
+	~	Time for customers to adjust their reports of perceived service quality.
+		Parameter not active in base simulation.
+	|
+
+Emp Quality Expectation = INTEG((indicated quality standard-Emp Quality Expectation)/
+		T TO ADJUST QS,INITIAL QS)
+	~	Quality
+	~	Quality Standard. Employees' desired level of service delivery.
+	|
+
+INITIAL QS = 0.95538
+	~	Quality
+	~	Initial Quality Standard. Estimated to fit past data on time per order.
+	|
+
+T TO ADJUST QS = 26
+	~	Week
+	~	Time to adjust quality standard. Judgmentally set based on interviews.
+	|
+
+indicated quality standard = OMEGA E*Emp Perception Of Quality+(1- OMEGA E)*Mgmt Quality Goal
+	~	Quality
+	~	Instantaneous Quality Standard. Anchored t oemployees' perception of 
+		delivered quality and adapts to management desired quality goal.
+	|
+
+OMEGA E = 1
+	~	Dimensionless
+	~	Weight of employees' perception in the formation of quality standard.
+	|
+
+Mgmt Quality Goal = 1
+	~	Quality
+	~	Management's desired level of service (1.0 = no complaints).
+	|
+
+Cust Service Expectations = INTEG((indicated customer service expectations-Cust Service Expectations
+		)/
+	T TO ADJUST CE,indicated customer service expectations)
+	~	Hours/Order
+	~	Expectation of time per order that customers have.
+	|
+
+CUST EXPECTATION REFERENCE = 1.16519
+	~	Hours/Order
+	~	Fixed external expectation that customers have for time allocated per order.
+		Estimated to fit past data on time per order.
+	|
+
+T TO ADJUST CE = 52
+	~	Week
+	~	Time for customer to adjust expectations to past performance.
+		Parameter not active in base simulation.
+	|
+
+indicated customer service expectations = OMEGA C*CUST EXPECTATION REFERENCE+
+	(1-OMEGA C)*time per order
+	~	Hours/Order
+	~	Instantaneous customer service expectations. Anchored to the service provided by 
+		other
+		suppliers in the industry and adapts to current service experienced.
+	|
+
+OMEGA C = 1
+	~	Dimensionless [0,1]
+	~	Weight to external (fix) standard for the formation of customer's service 
+		expectations. Set as a fortiori assumption.
+	|
+
+effect of qp on turnover = QP ON TO GRAPH(Emp Perception Of Quality)
+	~	Dimensionless
+	~	Effect of quality pressure on turnover. Set based on previous studies.
+	|
+
+QP ON TO GRAPH ([(0.5,0)-(1.5,2)],(0.5,1),(1,1),(1.5,1))
+	~	Dimensionless
+	~	Effect of Quality pressure on turnover. Table function set based on 
+		previous studies.
+	|
+
+quality pressure = (Emp Quality Expectation - Emp Perception Of Quality)/Emp Quality Expectation
+	~	Dimensionless
+	~	The dissonance created in employees by the gap between what 
+		they perceive to be the delivered quality and an internally held quality 
+		standard.
+	|
+
+********************************************************
+	.Measures
+********************************************************~
+		Measures to evaluate the performance of the service center.
+		Included to facilitate diagnosis of performance but not reported model 
+		description.
+	|
+
+avg delivery delay = Service Backlog/order fulfillment
+	~	Week [0,?]
+	~	The average delivery delay in the service center (Little's law).
+	~	:SUPPLEMENTARY 
+	|
+
+net overtime gain = work intensity*effect of fatigue on prod
+	~	Dimensionless [0,?]
+	~	Net effect of extended work intensity.
+	~	:SUPPLEMENTARY 
+	|
+
+turnover fraction = turnover rate/total labor
+	~	Dimensionless/Week [0,1]
+	~	Fractional turnover per week.
+	~	:SUPPLEMENTARY 
+	|
+
+case load = Service Backlog/total labor
+	~	Order/Employee
+	~	Cases in backlog per number of employees
+	~	:SUPPLEMENTARY 
+	|
+
+production ratio = customer orders/order fulfillment
+	~	Dimensionless
+	~	Ratio of incoming orders to outgoing orders.
+	~	:SUPPLEMENTARY 
+	|
+
+average productivity of labor = service capacity/total labor
+	~	Hours/Week/Employee
+	~	Average Productivity of Labor. Includes the effects of fatigue and 
+		experience.
+	~	:SUPPLEMENTARY 
+	|
+
+********************************************************
+	.Inputs
+********************************************************~
+	|
+
+customer orders = IF THEN ELSE( Time<=104 , CUSTOMER ords , a customer ords )
+	~	Order/Week
+	~	Orders incoming to the service center. Up to week 104 it is driven by exogenous data 
+		series (NWD),
+		for the reminder of the simulation, an artificial series (a Customer ords) 
+		is utilized.
+	|
+
+CUSTOMER ords := NWD
+	~	Order/Week
+	~	Renaming of Customer Orders per Week. Intermediate variable introduced to 
+		allow plotting and manipulation of the data series.
+	|
+
+NWD
+	~	Order/Week
+	~	Customer Orders per Week. Exogenous data series to drive the model.
+	|
+
+a customer ords = pink noise(2071.07,77.48,1,TIME STEP)
+	~	Order/Week
+	~	Artificial Customer Orders per Week; generated through the pink noise 
+		macro.
+	|
+
+absenteeism = IF THEN ELSE( Time<=104 ,(PER*HWE-NTA)/(PER*HWE),a absenteeism)
+	~	Dimensionless
+	~	Fraction of Absentee employees -- includes vacation time. 
+		Calculated from exogenous data series.   The difference between total 
+		number of hours available employees and the number of employees that
+		showed up to work. Up to week 104 it is driven by exogenous data series (PER & NTA),
+		for the reminder of the simulation, an artificial series (a Absenteeism) 
+		is utilized.
+	|
+
+PER
+	~	Employee
+	~	Personnel. Exogenous data series used to calculate absenteeism.
+		Number of employees currently employed in the lending center.
+	|
+
+NTA
+	~	Hours/Week
+	~	Net time Available. Exogenous data series used to calculate absenteeism.
+		Number of hours available per week.
+	|
+
+a absenteeism = pink noise(0.1654,0.032,2,TIME STEP)
+	~	Dimensionless
+	~	Artificial Fraction of Absentee employees; generated through the pink 
+		noise macro.
+	|
+
+HWE = 35
+	~	Hours/Week/Employee
+	~	Hours per week per employee. Conversion constant.
+	|
+
+********************************************************
+	.Control
+********************************************************~
+	|
+
+INITIAL TIME  = 53
+	~	Week
+	~	The time at which the simulation starts.
+	|
+
+FINAL TIME  = 300
+	~	Week
+	~	The time at which the simulation ends.
+	|
+
+TIME STEP  = 0.125
+	~	Week
+	~	The solution interval for the model.
+	|
+
+SAVEPER  = 
+        TIME STEP 
+	~	Week
+	~	The frequency with which results are saved.
+	|
+
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Delivery
+$192-192-192,0,Helvetica|14|B|0-0-0|0-0-0|0-0-0|-1--1--1|-1--1--1|96,96,0,0
+10,1,ALPHA,255,500,28,12,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,2,T TO ACUMM WI E,391,581,43,20,8,3,0,16,0,0,0,0,-1--1--1,0-0-0,|14|BU|0-0-0
+10,3,BETA,595,504,20,8,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,4,work intensity,511,460,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|B|0-0-0
+10,5,Fatigue E,519,540,40,20,3,3,0,0,0,0,0,0
+10,6,Fatigue A,667,400,40,20,3,3,0,0,0,0,0,0
+10,7,T TO ACUMM WI A,672,504,45,18,8,3,0,16,0,0,0,0,-1--1--1,0-0-0,|14|BU|0-0-0
+10,8,effect of fatigue on prod,471,624,40,24,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BIU|0-0-0
+10,9,effect of fatigue on turnover,635,312,46,25,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BIU|0-0-0
+10,10,NWD,40,40,20,8,0,3,0,0,-1,0,0,0
+10,11,INITIAL FE,551,600,24,16,8,3,0,16,0,0,0,0,-1--1--1,0-0-0,|14|BU|0-0-0
+10,12,INITIAL FA,719,464,20,20,8,3,0,16,0,0,0,0,-1--1--1,0-0-0,|14|BU|0-0-0
+10,13,effective labor fraction,227,664,40,20,8,2,0,3,0,0,0,0,128-128-128,0-0-0,|14|B|128-128-128
+10,14,work pressure,244,549,40,20,8,3,0,0,0,0,0,0
+10,15,desired service capacity,167,436,40,20,8,3,0,0,0,0,0,0
+10,16,effect of wp on to,363,492,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BIU|0-0-0
+10,17,Desired To,271,324,40,20,3,3,0,0,0,0,0,0
+10,18,service capacity,376,677,40,20,8,3,0,0,0,0,0,0
+10,19,effect of qp on to,287,449,48,15,8,2,0,59,0,0,0,0,128-128-128,0-0-0,Helvetica|14|BIU|128-128-128
+10,20,avg delivery delay,227,88,36,23,8,3,1,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|12|BI|0-0-0
+12,21,48,475,160,8,8,0,3,0,58,-1,0,0,0,-1--1--1,0-0-0,Helvetica|14|B|0-0-0
+11,22,48,387,160,4,8,34,3,0,0,1,0,0,0
+10,23,order fulfillment,387,188,40,20,40,3,0,0,0,0,0,0
+10,24,Service Backlog,295,160,40,20,3,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|B|0-0-0
+10,25,potential order fulfillment,531,276,40,20,8,3,0,0,0,0,0,0
+10,26,MIN RESIDENCE T FOR AN ORDER,311,104,47,30,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+12,27,48,91,164,8,8,0,3,0,58,-1,0,0,0,-1--1--1,0-0-0,Helvetica|14|B|0-0-0
+11,28,48,176,164,4,8,34,3,0,0,1,0,0,0
+10,29,customer orders,176,187,41,15,40,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|B|0-0-0
+10,30,DESIRED DELIVERY DELAY,83,299,44,24,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+12,31,48,440,324,8,8,0,3,0,0,-1,0,0,0
+11,32,48,371,324,4,8,34,3,0,0,1,0,0,0
+10,33,dto chg,371,356,28,24,40,3,0,0,0,0,0,0
+10,34,time per order,415,424,35,19,8,3,0,0,0,0,0,0
+10,35,t to adjust dto,339,268,32,24,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,36,INITIAL DTO,247,268,27,15,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,37,FP ON PRD GRAPH,471,732,40,20,8,3,1,0,0,0,0,0
+10,38,FT ON TO GRAPH,751,308,40,20,8,3,1,0,0,0,0,0
+10,39,MIN PROCESSING TPO,507,396,47,24,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+1,40,23,20,1,1,0,0,0,0,0,-1--1--1,,1|(315,112)|
+1,41,24,20,1,1,0,0,0,0,0,-1--1--1,,1|(231,117)|
+1,42,28,27,100,0,0,22,0,0,0,-1--1--1,,1|(135,164)|
+1,43,28,24,4,0,0,22,0,0,0,-1--1--1,,1|(217,164)|
+1,44,22,24,100,0,0,22,0,0,0,-1--1--1,,1|(359,160)|
+1,45,22,21,4,0,0,22,0,0,0,-1--1--1,,1|(429,160)|
+1,46,23,24,1,1,0,0,0,0,0,-1--1--1,,1|(347,200)|
+1,47,29,24,0,1,0,0,0,0,0,-1--1--1,,1|(229,175)|
+1,48,24,23,1,0,0,0,0,0,0,-1--1--1,,1|(343,216)|
+1,49,25,23,1,0,0,0,0,0,0,-1--1--1,,1|(475,200)|
+1,50,26,23,1,0,0,0,0,0,0,-1--1--1,,1|(375,116)|
+1,51,2,5,0,0,0,0,0,0,0,-1--1--1,,1|(449,562)|
+1,52,4,5,1,0,0,0,0,0,0,-1--1--1,,1|(535,508)|
+1,53,5,8,1,0,0,0,0,0,0,-1--1--1,,1|(495,600)|
+1,54,15,14,1,0,0,0,0,0,0,-1--1--1,,1|(195,520)|
+1,55,18,14,1,0,0,0,0,0,0,-1--1--1,,1|(263,604)|
+1,56,37,8,0,1,0,0,0,0,0,-1--1--1,,1|(471,687)|
+1,57,38,9,0,1,0,0,0,0,0,-1--1--1,,1|(702,309)|
+1,58,6,9,1,0,0,0,0,0,0,-1--1--1,,1|(656,352)|
+1,59,7,6,0,0,0,0,0,0,0,-1--1--1,,1|(670,459)|
+1,60,4,6,2,0,0,0,0,0,0,-1--1--1,,1|(632,441)|
+1,61,8,18,1,0,0,0,0,0,0,-1--1--1,,1|(432,673)|
+1,62,13,18,0,0,0,0,0,0,0,-1--1--1,,1|(294,669)|
+1,63,34,25,1,0,0,0,0,0,0,-1--1--1,,1|(515,320)|
+1,64,32,31,4,0,0,22,0,0,0,-1--1--1,,1|(403,324)|
+1,65,32,17,68,0,0,22,0,0,0,-1--1--1,,1|(339,324)|
+1,66,34,33,2,0,0,0,0,0,0,-1--1--1,,1|(419,356)|
+1,67,17,33,2,0,0,0,0,0,0,-1--1--1,,1|(320,368)|
+1,68,17,15,2,0,0,0,0,0,0,-1--1--1,,1|(203,356)|
+1,69,17,34,2,0,0,0,0,0,0,-1--1--1,,1|(311,400)|
+1,70,14,16,2,0,0,0,0,0,0,-1--1--1,,1|(315,532)|
+1,71,16,34,2,0,0,0,0,0,0,-1--1--1,,1|(420,460)|
+1,72,35,33,2,0,0,0,0,0,0,-1--1--1,,1|(351,316)|
+1,73,39,34,1,0,0,0,0,0,0,-1--1--1,,1|(471,432)|
+1,74,4,25,2,0,0,0,0,0,0,-1--1--1,,1|(559,352)|
+1,75,18,25,2,0,0,0,0,0,0,-1--1--1,,1|(612,540)|
+1,76,14,4,1,0,0,0,0,0,0,-1--1--1,,1|(383,533)|
+1,77,19,34,2,0,0,0,0,0,0,-1--1--1,,1|(355,452)|
+1,78,1,16,0,0,0,0,0,0,0,-1--1--1,,1|(296,496)|
+1,79,3,4,0,0,0,0,0,0,0,-1--1--1,,1|(570,491)|
+10,80,on office service capacity,245,726,40,20,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128
+1,81,80,18,0,0,0,0,0,0,0,-1--1--1,,1|(304,704)|
+10,82,CUSTOMER ords,63,89,48,19,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128
+1,83,82,29,0,0,0,0,0,0,0,-1--1--1,,1|(115,135)|
+10,84,a customer ords,172,63,40,20,8,2,0,3,-1,0,0,0,192-192-192,0-0-0,|14|B|192-192-192
+1,85,84,29,0,0,0,0,0,64,0,-1--1--1,,1|(173,121)|
+10,86,Time,41,188,40,20,8,2,0,3,-1,0,0,0,192-192-192,0-0-0,|14|B|192-192-192
+1,87,86,29,0,0,0,0,0,0,0,-1--1--1,,1|(101,187)|
+10,88,TTUP,452,289,25,15,8,3,0,0,0,0,0,0
+10,89,TTDN,424,247,27,13,8,3,0,0,0,0,0,0
+1,90,89,35,0,0,0,0,0,64,0,-1--1--1,,1|(390,254)|
+1,91,88,35,0,0,0,0,0,64,0,-1--1--1,,1|(405,280)|
+1,92,17,35,1,1,0,0,0,64,0,-1--1--1,,1|(286,282)|
+1,93,34,35,1,1,0,0,0,64,0,-1--1--1,,1|(461,342)|
+1,94,30,15,0,0,0,0,0,64,0,-1--1--1,,1|(121,363)|
+1,95,24,15,1,0,0,0,0,64,0,-1--1--1,,1|(166,280)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Labor
+$192-192-192,0,Helvetica|14|B|0-0-0|0-0-0|0-0-0|-1--1--1|-1--1--1|96,96,0,0
+10,1,T TO CANCEL VACANCIES,134,261,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,2,T FOR TURNOVER,702,266,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,3,FRAC EP FOR TRAINING,554,158,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,4,INITIAL EXPERIENCED PERSONNEL,622,386,107,8,0,3,1,58,-1,0,0,0,-1--1--1,0-0-0,Helvetica|14|B|0-0-0
+10,5,indicated labor order rate,102,450,43,22,8,3,0,0,0,0,0,0
+10,6,T FOR EXPERIENCE,470,262,40,19,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,7,effect of fatigue on turnover,729,426,47,22,8,2,0,59,0,0,0,0,128-128-128,0-0-0,Helvetica|14|B|128-128-128
+10,8,Vacancies,185,302,40,20,3,3,0,0,0,0,0,0
+11,9,1276,494,306,4,8,34,3,0,0,1,0,0,0
+10,10,experience rate,494,334,44,20,40,3,0,0,0,0,0,0
+12,11,48,22,302,8,8,0,3,0,0,-1,0,0,0
+12,12,48,789,306,8,8,0,3,0,0,-1,0,0,0
+10,13,INITIAL ROOKIES,426,361,51,8,0,3,1,0,-1,0,0,0
+10,14,effect of qp on turnover,818,394,40,20,8,2,0,59,0,0,0,0,128-128-128,0-0-0,Helvetica|14|B|128-128-128
+10,15,T TO ADJUST LABOR,315,480,41,19,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,16,Rookies,386,306,40,20,3,3,0,0,0,0,0,0
+10,17,total labor,494,394,27,19,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BI|0-0-0
+10,18,Experienced Personnel,614,305,48,20,3,3,0,0,0,0,0,0
+10,19,ROOKIES' EFFECTIVENESS,457,134,54,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,20,effective labor fraction,506,225,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BI|0-0-0
+10,21,Time,405,541,29,8,0,2,1,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128
+10,22,labor correction,476,464,40,20,8,3,0,0,0,0,0,0
+10,23,desired vacancies,366,425,40,20,8,3,0,0,0,0,0,0
+10,24,vacancies correction,205,414,40,20,8,3,0,0,0,0,0,0
+10,25,HIRING DELAY,337,366,24,19,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+11,26,1292,86,302,4,8,34,3,0,0,1,0,0,0
+10,27,labor order rate,86,330,40,20,40,3,0,0,0,0,0,0
+11,28,1308,282,306,4,8,34,3,0,0,1,0,0,0
+10,29,hiring rate,282,330,24,15,40,3,0,0,0,0,0,0
+11,30,1196,710,306,4,8,34,3,0,0,1,0,0,0
+10,31,turnover rate,710,334,40,20,40,3,0,0,0,0,0,0
+10,32,Desired Labor,681,505,36,19,8,2,0,3,0,0,0,0,128-128-128,0-0-0,|14|B|128-128-128
+1,33,29,8,1,1,0,0,0,0,0,-1--1--1,,1|(246,326)|
+1,34,27,8,0,1,0,0,0,0,0,-1--1--1,,1|(128,318)|
+1,35,29,16,0,1,0,0,0,0,0,-1--1--1,,1|(319,321)|
+1,36,10,16,0,1,0,0,0,0,0,-1--1--1,,1|(444,321)|
+1,37,10,18,0,1,0,0,0,0,0,-1--1--1,,1|(545,321)|
+1,38,6,10,1,0,0,0,0,0,0,-1--1--1,,1|(525,298)|
+1,39,16,10,1,0,0,0,0,0,0,-1--1--1,,1|(434,349)|
+1,40,25,23,1,0,0,0,0,0,0,-1--1--1,,1|(382,382)|
+1,41,15,22,1,0,0,0,0,0,0,-1--1--1,,1|(389,475)|
+1,42,17,22,1,0,0,0,0,0,0,-1--1--1,,1|(486,438)|
+1,43,23,24,1,0,0,0,0,0,0,-1--1--1,,1|(290,418)|
+1,44,15,24,0,0,0,0,0,0,0,-1--1--1,,1|(267,451)|
+1,45,8,24,1,0,0,0,0,0,0,-1--1--1,,1|(210,382)|
+1,46,16,17,1,0,0,0,0,0,0,-1--1--1,,1|(445,386)|
+1,47,18,17,1,0,0,0,0,0,0,-1--1--1,,1|(569,370)|
+1,48,28,16,4,0,0,22,0,0,0,-1--1--1,,1|(316,306)|
+1,49,28,8,100,0,0,22,0,0,0,-1--1--1,,1|(251,306)|
+1,50,9,18,4,0,0,22,0,0,0,-1--1--1,,1|(532,306)|
+1,51,9,16,100,0,0,22,0,0,0,-1--1--1,,1|(458,306)|
+1,52,26,8,4,0,0,22,0,0,0,-1--1--1,,1|(117,302)|
+1,53,26,11,68,0,0,22,0,0,0,-1--1--1,,1|(56,302)|
+1,54,30,12,4,0,0,22,0,0,0,-1--1--1,,1|(747,306)|
+1,55,30,18,100,0,0,22,0,0,0,-1--1--1,,1|(684,306)|
+1,56,18,31,1,0,0,0,0,0,0,-1--1--1,,1|(674,342)|
+1,57,2,31,2,0,0,0,0,0,0,-1--1--1,,1|(746,289)|
+1,58,14,31,1,0,0,0,0,0,0,-1--1--1,,1|(769,330)|
+1,59,7,31,1,0,0,0,0,0,0,-1--1--1,,1|(750,358)|
+1,60,16,20,2,0,0,0,0,0,0,-1--1--1,,1|(438,226)|
+1,61,18,20,2,0,0,0,0,0,0,-1--1--1,,1|(590,246)|
+1,62,19,20,0,0,0,0,0,0,0,-1--1--1,,1|(477,173)|
+1,63,3,20,0,0,0,0,0,0,0,-1--1--1,,1|(534,185)|
+1,64,8,29,2,0,0,0,0,0,0,-1--1--1,,1|(230,346)|
+1,65,25,29,2,0,0,0,0,0,0,-1--1--1,,1|(326,333)|
+1,66,24,5,1,0,0,0,0,0,0,-1--1--1,,1|(170,457)|
+1,67,5,27,1,0,0,0,0,0,0,-1--1--1,,1|(74,361)|
+1,68,8,27,2,0,0,0,0,0,0,-1--1--1,,1|(170,346)|
+1,69,1,27,2,0,0,0,0,0,0,-1--1--1,,1|(117,297)|
+1,70,32,22,1,0,0,0,0,0,0,-1--1--1,,1|(563,505)|
+10,71,INITIAL VACANCIES,158,128,40,20,8,3,1,0,0,0,0,0
+10,72,desired hiring,498,540,40,20,8,3,0,0,0,0,0,0
+1,73,31,77,1,0,0,0,0,64,0,-1--1--1,,1|(647,373)|
+1,74,72,23,1,0,0,0,0,64,0,-1--1--1,,1|(408,497)|
+1,75,22,72,1,0,0,0,0,64,0,-1--1--1,,1|(494,519)|
+1,76,72,5,1,0,0,0,0,64,0,-1--1--1,,1|(295,574)|
+10,77,replacement rate,619,434,54,15,8,3,0,0,0,0,0,0
+1,78,77,72,1,0,0,0,0,64,0,-1--1--1,,1|(574,509)|
+1,79,32,77,0,0,0,0,0,64,0,-1--1--1,,1|(653,472)|
+1,80,17,77,0,0,0,0,0,64,0,-1--1--1,,1|(539,408)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Service Capacity
+$192-192-192,0,Helvetica|14|B|0-0-0|0-0-0|0-0-0|-1--1--1|-1--1--1|96,96,0,0
+10,1,NTA,63,247,19,7,8,3,0,0,0,0,0,0
+10,2,absenteeism,209,229,52,8,8,3,0,0,0,0,0,0
+10,3,PER,56,202,23,8,8,3,0,0,0,0,0,0
+10,4,HWE,346,287,17,8,0,3,0,0,-1,0,0,0
+10,5,on office service capacity,211,324,40,20,8,3,0,0,0,0,0,0
+1,6,3,2,0,0,0,0,0,0,0,-1--1--1,,1|(114,212)|
+1,7,1,2,0,0,0,0,0,0,0,-1--1--1,,1|(112,240)|
+1,8,4,2,0,0,0,0,0,0,0,-1--1--1,,1|(284,261)|
+1,9,2,5,0,0,0,0,0,0,0,-1--1--1,,1|(209,263)|
+1,10,28,5,0,0,0,0,0,0,0,-1--1--1,,1|(212,376)|
+1,11,4,5,0,0,0,0,0,0,0,-1--1--1,,1|(296,300)|
+10,12,T TO ADJUST DL,654,276,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,13,Desired Labor,483,220,40,20,3,3,0,0,0,0,0,0
+10,14,INITIAL P ELF,601,423,46,8,0,3,0,0,-1,0,0,0
+10,15,desired service capacity,656,210,40,20,8,2,0,3,0,0,0,0,128-128-128,0-0-0,|14|B|128-128-128
+10,16,T TO PERCEIVE LP,700,378,48,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,17,Perceived Labor Productivity,499,365,50,23,3,3,0,0,0,0,0,0
+1,18,16,17,0,0,0,0,0,0,0,-1--1--1,,1|(607,371)|
+1,19,12,13,0,0,0,0,0,0,0,-1--1--1,,1|(575,250)|
+10,20,a absenteeism,207,126,54,15,8,2,0,3,-1,0,0,0,192-192-192,0-0-0,|14|B|192-192-192
+10,21,Time,296,143,40,20,8,2,0,3,-1,0,0,0,192-192-192,0-0-0,|14|B|192-192-192
+1,22,21,2,0,0,0,0,0,0,0,-1--1--1,,1|(251,187)|
+1,23,20,2,0,0,0,0,0,64,0,-1--1--1,,1|(207,173)|
+1,24,15,13,0,0,0,0,0,0,0,-1--1--1,,1|(576,214)|
+1,25,4,13,0,0,0,0,0,0,0,-1--1--1,,1|(396,262)|
+1,26,17,13,0,0,0,0,0,0,0,-1--1--1,,1|(491,297)|
+1,27,4,17,0,0,0,0,0,0,0,-1--1--1,,1|(400,315)|
+10,28,total labor,213,416,40,20,8,2,0,3,-1,0,0,0,192-192-192,0-0-0,|14|B|192-192-192
+1,29,28,17,0,0,0,0,0,0,0,-1--1--1,,1|(344,392)|
+10,30,service capacity,498,469,40,20,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128
+1,31,30,17,0,0,0,0,0,0,0,-1--1--1,,1|(498,425)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Quality
+$192-192-192,0,Helvetica|14|B|0-0-0|0-0-0|0-0-0|-1--1--1|-1--1--1|96,96,75,0
+10,1,delivered quality,243,219,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BIU|0-0-0
+10,2,T TO ADJUST CE,323,147,44,16,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,3,T FOR MGMT TO PERCEIVE,368,244,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,4,quality pressure,251,431,36,16,8,3,0,0,0,0,0,0
+10,5,Mgmt Quality Goal,592,423,40,20,8,3,0,0,0,0,0,0
+10,6,Emp Perception Of Quality,379,309,48,24,3,3,0,0,0,0,0,0
+10,7,Emp Quality Expectation,343,475,49,21,3,3,0,0,0,0,0,0
+10,8,OMEGA E,506,533,47,12,0,3,0,16,-1,0,0,0,-1--1--1,0-0-0,|14|BU|0-0-0
+10,9,time per order,147,299,46,17,8,2,0,59,0,0,0,0,128-128-128,0-0-0,Helvetica|14|B|128-128-128
+10,10,effect of qp on to,76,432,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BIU|0-0-0
+10,11,Cust Service Expectations,219,103,52,24,3,3,0,0,0,0,0,0
+10,12,TPO ON DQ GRAPH,227,287,40,20,8,3,1,0,0,0,0,0
+10,13,QP ON TO GRAPH,59,383,40,20,8,3,1,0,0,0,0,0
+10,14,T TO ADJUST QS,267,527,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,15,T FOR EMP TO PERCEIVE,239,351,44,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,16,CUST EXPECTATION REFERENCE,63,103,51,28,8,3,0,16,0,0,0,0,-1--1--1,0-0-0,|14|BU|0-0-0
+10,17,OMEGA C,51,247,48,12,0,3,0,16,0,0,0,0,-1--1--1,0-0-0,|14|BU|0-0-0
+10,18,indicated quality standard,476,464,40,20,8,3,0,0,0,0,0,0
+10,19,Mgmt Perception Of Quality,488,241,52,24,3,3,0,0,0,0,0,0
+10,20,GAMMA,51,496,31,12,8,3,0,0,0,0,0,0
+10,21,effect of qp on turnover,163,396,40,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BIU|0-0-0
+10,22,indicated customer service expectations,112,171,52,28,8,3,0,0,0,0,0,0
+10,23,Cust Perception Of Quality,618,240,52,23,3,3,0,0,0,0,0,0
+10,24,T TO PERCEIVE CUST REPORT ON QUALITY,636,169,52,20,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,25,INITIAL QS,264,588,40,16,8,3,0,58,0,0,0,0,-1--1--1,0-0-0,Helvetica|14|BU|0-0-0
+10,26,initial perception of quality,416,66,52,24,8,3,0,0,0,0,0,0
+10,27,INITIAL DTO,291,45,69,12,0,2,1,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128
+1,28,11,1,1,0,0,0,0,0,0,-1--1--1,,1|(275,183)|
+1,29,4,10,1,0,0,0,0,0,0,-1--1--1,,1|(135,452)|
+1,30,1,19,1,0,0,0,0,0,0,-1--1--1,,1|(343,200)|
+1,31,3,19,1,0,0,0,0,0,0,-1--1--1,,1|(428,255)|
+1,32,6,18,1,0,0,0,0,0,0,-1--1--1,,1|(471,400)|
+1,33,5,18,1,0,0,0,0,0,0,-1--1--1,,1|(519,463)|
+1,34,8,18,1,0,0,0,0,0,0,-1--1--1,,1|(496,514)|
+1,35,14,7,1,0,0,0,0,0,0,-1--1--1,,1|(331,511)|
+1,36,18,7,1,0,0,0,0,0,0,-1--1--1,,1|(399,488)|
+1,37,7,4,1,0,0,0,0,0,0,-1--1--1,,1|(275,459)|
+1,38,6,4,1,0,0,0,0,0,0,-1--1--1,,1|(309,418)|
+1,39,15,6,0,0,0,0,0,0,0,-1--1--1,,1|(300,332)|
+1,40,1,6,1,0,0,0,0,0,0,-1--1--1,,1|(317,243)|
+1,41,1,23,1,0,0,0,0,0,0,-1--1--1,,1|(518,196)|
+1,42,24,23,1,0,0,0,0,0,0,-1--1--1,,1|(626,225)|
+1,43,12,1,0,1,0,0,0,0,0,-1--1--1,,1|(232,259)|
+1,44,13,21,0,1,0,0,0,0,0,-1--1--1,,1|(104,388)|
+1,45,9,1,1,0,0,0,0,0,0,-1--1--1,,1|(183,235)|
+1,46,9,22,2,0,0,0,0,0,0,-1--1--1,,1|(103,207)|
+1,47,2,11,2,0,0,0,0,0,0,-1--1--1,,1|(291,95)|
+1,48,16,22,1,0,0,0,0,0,0,-1--1--1,,1|(51,172)|
+1,49,17,22,0,0,0,0,0,0,0,-1--1--1,,1|(70,222)|
+1,50,22,11,2,0,0,0,0,0,0,-1--1--1,,1|(155,111)|
+1,51,6,21,2,0,0,0,0,0,0,-1--1--1,,1|(220,404)|
+1,52,20,10,0,0,0,0,0,0,0,-1--1--1,,1|(58,474)|
+1,53,16,26,1,1,0,0,0,0,0,-1--1--1,,1|(230,65)|
+1,54,27,26,0,1,0,0,0,0,0,-1--1--1,,1|(355,54)|
+1,55,12,26,1,1,0,0,0,0,0,-1--1--1,,1|(417,145)|
+1,56,26,6,0,0,0,0,0,64,1,-1--1--1,,1|(398,180)|
+1,57,25,7,0,0,0,0,0,64,1,-1--1--1,,1|(297,539)|
+1,58,26,19,0,0,0,0,0,64,1,-1--1--1,,1|(448,147)|
+1,59,26,23,0,0,0,0,0,64,1,-1--1--1,,1|(511,148)|
+///---\\\
+:L<%^E!@
+9:test
+13:DATA.vdf,
+15:0,0,0,0,0,0
+19:75,3
+27:2,
+34:0,
+4:Time
+5:Mgmt Perception Of Quality
+35:Date
+36:YYYY-MM-DD
+37:2000
+38:1
+39:1
+40:2
+41:0
+42:0
+24:0
+25:0
+26:0
