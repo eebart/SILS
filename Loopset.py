@@ -123,7 +123,11 @@ def geodetic(graph):
         pairs = []
         
         for entry in indices:
-            pairs.append([nodes[entry[0,0]],nodes[entry[0,1]]])
+
+            # Solution: not validated yet!
+            pairs.append([nodes[entry[0]],nodes[entry[1]]])
+            ##original:
+            # pairs.append([nodes[entry[0,0]],nodes[entry[0,1]]])
         already_seen = []
         
         for j in range(len(pairs)):
