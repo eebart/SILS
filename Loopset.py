@@ -227,18 +227,26 @@ if __name__ == "__main__":
     '''
     # The graph object which is used, is build and we get rid of the 
     # "nonsense" variables.
-    file_path = r'D:\epruyt\Desktop\Ageing2.cPickle'
-    graph = cPickle.load(open(file_path, 'r'))
-    graph.remove_nodes_from(["INITIAL TIME","TIME STEP","SAVEPER","Time",
+
+    file_path = 'graph.cPickle'
+    with open(file_path, 'rb') as f:
+	    # The protocol version used is detected automatically, so we do not
+	    # have to specify it.
+	    graph = pickle.load(f)
+    
+	graph.remove_nodes_from(["INITIAL TIME","TIME STEP","SAVEPER","Time",
                              "TIME STEP","FINAL TIME"])
-    
+
+
+	# Updated (should work)
     cycleGraphs = cycleGraph(graph)
-    
+	
+	#TR: I used this to verify if the cycleGraph function works. It does    
 #    for graph in cycleGraphs:
 #        graphPlot(graph)
     
     for graph in cycleGraphs:
-        
+        #TODO (make SILS function work)
         sils = SILS(graph)
         for entry in sils:
             print (entry)
