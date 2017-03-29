@@ -1,49 +1,45 @@
 '''
-
-Created on Dec 7, 2011
-
-@author: jhkwakkel
+Created 2017
+@author: eebart
 '''
-import networkx as nx
-import matplotlib.pyplot as plt
+import os
+
 import pickle
-#TODO
-from expWorkbench.vensimDLLwrapper import VensimWarning
+import networkx as nx
 
-# TODO (not used, not necessary, only for layout of plotting)
-try:
-    from networkx import graphviz_layout
-except ImportError:
-    raise ImportError("This example needs Graphviz and either PyGraphviz or Pydot")
+from vensimConnector import *
 
-# TODO
-from expWorkbench import vensim
-from expWorkbench import vensimDLLwrapper as venDLL
+def build_causal_map(workingDirectory, filename):
+    if '.vpm' not in filename.lower():
+        print('{} is not a VPM file.'.format(filename))
+        return None
 
-
-model_name = "Your_Model.vpm"
-vensim.load_model(model_name)
-#C:\workspace\EMA-workbench\src\sandbox\sils\MODEL.vpm
-
-# TODO
-vars = venDLL.get_varnames()
-
-graph = nx.DiGraph()
-graph.add_nodes_from(vars)
-
-for var in vars:
     try:
-    	# TODO
-        causes = venDLL.get_varattrib(var, attribute=4) #cause
-        for cause in causes:
-            graph.add_edge(cause, var)
-    except VensimWarning:
-        print var
+        fn = os.path.join(workingDirectory, filename)
+        load_model(fn)
+    except:
+        print('Unable to load model')
+        return None
 
+    graph = nx.DiGraph()
 
-new_filename = "filename.pickle"
-pickle.dump(graph, open(new_filename,'wb'), pickle.HIGHEST_PROTOCOL) # (Highest protocol is optional)
-print('done')
-#pos=nx.graphviz_layout(graph,prog='twopi',args='')
-#nx.draw_networkx(graph, pos=pos)
-#plt.show()
+    try:
+        model_vars = get_varnames()
+        graph.add_nodes_from(model_vars)
+    except:
+        print('Problem reading variable names from model')
+        return None
+
+    for var in model_vars:
+        try:
+            causes = get_varattrib(var, attribute=4) #cause
+            for cause in causes:
+                graph.add_edge(cause, var)
+        except:
+            print('Problem with reading causes for variable {}'.format(var))
+
+    return graph
+
+def save_to_pickle(graph, pickle_file):
+    pickle.dump(graph, open(pickle_file,'wb'), pickle.HIGHEST_PROTOCOL) # (Highest protocol is optional)
+    print('done')
