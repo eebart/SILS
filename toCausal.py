@@ -41,5 +41,4 @@ def build_causal_map(workingDirectory, filename):
     return graph
 
 def save_to_pickle(graph, pickle_file):
-    pickle.dump(graph, open(pickle_file,'wb'), pickle.HIGHEST_PROTOCOL) # (Highest protocol is optional)
-    print('done')
+    pickle.dump(graph, open(pickle_file,'wb'), pickle.HIGHEST_PROTOCOL)
