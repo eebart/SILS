@@ -10,7 +10,7 @@ import numpy as np
 
 __all__=['read_from_pickle',
         'cycleGraph',
-        'SILS']
+        'build_sils']
 
 def read_from_pickle(filename):
     with open(filename, 'rb') as f:
@@ -22,6 +22,16 @@ def read_from_pickle(filename):
                                  "TIME STEP","FINAL TIME"])
 
         return data
+
+def build_sils(data):
+    all_sils = []
+    cycleGraphs = cycleGraph(data)
+    for graph in cycleGraphs:
+        sils = SILS(graph)
+
+        all_sils.extend(sils)
+
+    return all_sils
 
 def cyclePartition(graph):
     a = prt.adj(graph)
@@ -120,21 +130,17 @@ def loopTrack(sourceDest,graph):
 def geodetic(graph):
     D = distance(graph)
     L = np.transpose(np.tril(D))+np.triu(D)
-    loops = []
     nodes = graph.nodes()
 
+    loops = []
     for i in range(2,int(np.max(L)+1)):
         indices = np.argwhere(L==i)
         pairs = []
 
         for entry in indices:
-
-            # Solution: not validated yet!
             pairs.append([nodes[entry[0]],nodes[entry[1]]])
-            ##original:
-            # pairs.append([nodes[entry[0,0]],nodes[entry[0,1]]])
-        already_seen = []
 
+        already_seen = []
         for j in range(len(pairs)):
             if j in already_seen:
                 continue
@@ -142,7 +148,7 @@ def geodetic(graph):
             loop = loopTrack(item,graph)
 
             for k, item in enumerate(pairs):
-                if item[0] and item[1] in loop:
+                if (item[0] in loop) and (item[1] in loop):
                     already_seen.append(k)
 
             if len(set(loop)) == len(loop):

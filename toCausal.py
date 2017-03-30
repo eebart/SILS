@@ -38,6 +38,7 @@ def build_causal_map(workingDirectory, filename):
         except:
             print('Problem with reading causes for variable {}'.format(var))
 
+    graph.remove_nodes_from(["INITIAL TIME","TIME STEP","SAVEPER","Time","TIME STEP","FINAL TIME"])
     return graph
 
 def save_to_pickle(graph, pickle_file):
