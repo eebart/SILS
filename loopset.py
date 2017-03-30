@@ -4,9 +4,8 @@ Created on January 2012 - March 2012
 @author: Bas M.J. Keijser
 '''
 import pickle
-import Partitions as prt
 import numpy as np
-#import LoopKO
+import partitions as prt
 
 __all__=['read_from_pickle',
         'cycleGraph',
