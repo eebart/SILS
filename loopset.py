@@ -5,7 +5,7 @@ Created on January 2012 - March 2012
 '''
 import pickle
 import numpy as np
-import partitions as prt
+import Partitions as prt
 
 __all__=['read_from_pickle',
         'cycleGraph',
