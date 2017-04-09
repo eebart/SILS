@@ -31,11 +31,13 @@ def Deactivate_Loop_Phaff(FromVar,ToVar,filename):
 	FromVar: string with the node (variable name) where the edge starts 
 	ToVar: string with the node (variable name) where the edge ends
 	''' 
-
+	# TEST
 	print(FromVar,ToVar,filename)
 	return
 
 
+
+# For duplicating a variable:
 def find_var_function(var, mdl_list):
     """
     input: 
@@ -48,6 +50,7 @@ def find_var_function(var, mdl_list):
     x2 : end index of var formula
     """
     #find formula start
+    #TODO: improve with using startswith(var+"=").
     formula_start = var+"="
     for i, line in enumerate(mdl_list):
         if formula_start in line:
@@ -61,14 +64,15 @@ def find_var_function(var, mdl_list):
 
     return start_i, end_i
 
-
 def find_sketch_info(var, mdl_list):
-	    #Find Sketch info start:
+	#Find Sketch info start:
+
     for i3,line3 in enumerate(mdl_list):
     	if 'Sketch information' in line3:
     		sketch_start = i3
     		break
 
+    #TODO improve with line4.split(",")[x?] == var
     for i4,line4 in enumerate(mdl_list[sketch_start:]):
     	if var in line4:
     		sketch_line = i4+sketch_start
@@ -138,3 +142,19 @@ def save_list_to_mdl(mdl_list, filename):
 		new_file.write(line)
 	new_file.close()
 	print("File has been saved as:",filename)
+
+
+def change_to_var_input(FromVar, FromVarDup, ToVar, mdl_list):
+	"""
+	input:
+	FromVar,FromVarDup, ToVar: string with variable name
+	mdl_list: .mdl file in list format
+	output:
+	New list representing .mdl with formula where FromVarDup replaced FromVar in the ToVar formula.
+	"""
+	# check if FromVar duplicate is Created
+	pass
+	# replace 
+	# ....
+
+return
