@@ -21,20 +21,7 @@ Created on April 2017
 #   new file with
 
 
-__all__ = ['Deactivate_Loop_Phaff', 'find_var_function']
-
-
-def Deactivate_Loop_Phaff(FromVar, ToVar, filename):
-    '''
-    This function modifies a MDL file to deactive a loop
-    via the edge FromVar - ToVar
-    input:
-    FromVar: string with the node (variable name) where the edge starts
-    ToVar: string with the node (variable name) where the edge ends
-    '''
-    # TEST
-    print(FromVar, ToVar, filename)
-    return
+__all__ = ['save_list_to_mdl', 'find_var_function']
 
 
 # For duplicating a variable
@@ -139,6 +126,14 @@ def add_to_vensim_sketch(var, mdl_list):
     return mdl_list
 
 
+# For handling Vensim files
+def read_mdl_file(filename):
+    with open(filename, 'r') as f:
+        orig_list = f.readlines()
+    f.close()
+    return orig_list
+
+
 def save_list_to_mdl(mdl_list, filename):
     """
     input:
@@ -164,6 +159,7 @@ def save_list_to_mdl(mdl_list, filename):
     print("File has been saved as:", filename)
 
 
+# TODO for Phaff
 def change_to_var_input(FromVar, FromVarDup, ToVar, mdl_list):
     """
     input:
@@ -178,3 +174,17 @@ def change_to_var_input(FromVar, FromVarDup, ToVar, mdl_list):
     # ....
 
     return x
+
+
+# TODO for Phaff
+def Deactivate_Loop_Phaff(FromVar, ToVar, filename):
+    '''
+    This function modifies a MDL file to deactive a loop
+    via the edge FromVar - ToVar
+    input:
+    FromVar: string with the node (variable name) where the edge starts
+    ToVar: string with the node (variable name) where the edge ends
+    '''
+    # TEST
+    print(FromVar, ToVar, filename)
+    return

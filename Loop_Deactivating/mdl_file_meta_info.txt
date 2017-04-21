@@ -1,0 +1,21 @@
+10,124,test1,170,495,17,11,8,3,0,0,0,0,0,0
+10 = variable that should be shown
+124 = number of variable (max 100 larger than the previous)
+test1 = variable name
+
+10,1,stock,543,259,40,20,3,3,0,0,0,0,0,0
+10,1,test1,170,495,17,11,8,3,0,0,0,0,0,0
+
+10,23,box1,96,91,40,20,3,3,0,0,0,0,0,0
+10,24,var1,102,162,16,11,8,3,0,0,0,0,0,0
+
+difference normal and Gaming auxilary:
+var1= GAME (
+	in input+test1)
+	~	
+	~		|
+
+var1=
+	in input+test1
+	~	
+	~		|
